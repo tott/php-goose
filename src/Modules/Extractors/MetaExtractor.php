@@ -285,7 +285,7 @@ class MetaExtractor extends AbstractModule implements ModuleInterface {
 
 		$keywords_js = [];
 		foreach ( [ 'section', 'siteHier', 'siteSection', 'articleSection', 'sections', 'hub_page' ] as $search_key ) {
-			$keywords_js = array_merge( $keywords_js, parse_js( $this->article()->getRawHtml(), $search_key ) );
+			$keywords_js = array_merge( $keywords_js, $this->parse_js( $this->article()->getRawHtml(), $search_key ) );
 		}
 
 		$keywords = implode( ',', array_unique( array_merge( $keywords, $keywords_article_section, $keywords_article_top_section, $keywords_dfp, $keywords_topics, $keywords_js ) ) );
@@ -321,23 +321,29 @@ class MetaExtractor extends AbstractModule implements ModuleInterface {
 	}
 
 	private function keyword_clean( $string ) {
-		$split = '/[,;:]/';
+		if ( empty( $string ) ) {
+			return [];
+		}
+		$split = '/[,;:]+/ui';
 		$string = html_entity_decode( $string );
 		$keywords_raw = preg_split( $split, $string );
-		$keywords = array_map( $keywords_raw, 'trim' );
+		$keywords = array_map( 'trim', $keywords_raw );
 		$keywords = array_unique( $keywords );
 		return $keywords;
 	}
 
 	private function parse_js( $html, $search_key ) {
-		$matches = preg_match( '/"' . preg_quote( $search_key ) . '":["|\'|\\[](.+)["|\'|\\]]/ui', $html );
+		if ( ! preg_match( '/["|\']' . preg_quote( $search_key ) . '["|\']:\[([^\]]+)\]/i', $html, $matches ) ) {
+			preg_match( '/["|\']' . preg_quote( $search_key ) . '["|\']:["|\']([^"|\']+)["|\']/i', $html, $matches );
+		}
+
 		if ( isset( $matches[1] ) ) {
 			$matched_values = explode( ',', $matches[1] );
-			$matched_values = array_map( $matched_values, function( $value ) {
+			$matched_values = array_map( function( $value ) {
 				$value = str_replace( [ '"', "'" ], '', $value );
 				$value = trim( $value );
 				return $value;
-			});
+			}, $matched_values );
 			return $matched_values;
 		}
 		return [];
