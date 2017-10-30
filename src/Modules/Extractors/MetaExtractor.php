@@ -20,10 +20,10 @@ class MetaExtractor extends AbstractModule implements ModuleInterface {
 
 	/** @var string[] */
 	protected static $SPLITTER_CHARS = [
-		'|',
-	'-',
-	'»',
-	':',
+	   '|',
+	   '-',
+	   '»',
+	   ':',
 	];
 
 	/**
@@ -180,9 +180,13 @@ class MetaExtractor extends AbstractModule implements ModuleInterface {
 			return '';
 		}
 
-		$content = $nodes->first()->attr( $attr );
-		$content = trim( $content );
-
+		$values = [];
+		foreach ( $nodes as $node ) {
+			$value = $node->attr( $attr );
+			$values[] = trim( $value );
+		}
+		$values = array_unique( $values );
+		$content = implode( ',', $values );
 		return $content;
 	}
 
@@ -248,16 +252,20 @@ class MetaExtractor extends AbstractModule implements ModuleInterface {
 	 * @return string
 	 */
 	private function getMetaKeywords() {
-		$keywords = $this->getMetaContent( $this->article()->getDoc(), 'name', 'keywords' );
-		$keywords = $this->keyword_clean( $keywords );
+		$meta = [
+			[ 'name', 'keywords' ],
+			[ 'property', 'sailthru.tags' ],
+			[ 'name', 'news_keywords' ],
+			[ 'property', 'article:tag' ],
+			[ 'property', 'video:tag' ],
+		];
+		$keywords_meta = [];
+		foreach ( $meta as $search ) {
+			$_meta = $this->getMetaContent( $this->article()->getDoc(), $search[0], $search[1] );
+			$keywords_meta = array_merge( $keywords_meta, $_meta );
+		}
 
-		$keywords_sailthru = $this->getMetaContent( $this->article()->getDoc(), 'property', 'sailthru.tags' );
-		$keywords_sailthru = $this->keyword_clean( $keywords_sailthru );
-
-		$keywords_news = $this->getMetaContent( $this->article()->getDoc(), 'name', 'news_keywords' );
-		$keywords_news = $this->keyword_clean( $keywords_news );
-
-		$keywords = implode( ',', array_unique( array_merge( $keywords, $keywords_news, $keywords_sailthru ) ) );
+		$keywords = implode( ',', array_unique( $keywords_meta ) );
 		return $keywords;
 	}
 
@@ -268,27 +276,29 @@ class MetaExtractor extends AbstractModule implements ModuleInterface {
 	 * @return string
 	 */
 	private function getMetaSections() {
-		$keywords = $this->getMetaContent( $this->article()->getDoc(), 'name', 'category' );
-		$keywords = $this->keyword_clean( $keywords );
+		$meta = [
+			[ 'name', 'category' ],
+			[ 'property', 'article:section' ],
+			[ 'property', 'article:top-level-section' ],
+			[ 'name', 'dfp-ad-unit-path' ],
+			[ 'name', 'topics' ],
+			[ 'name', 'analyticsAttributes.contentType' ],
+			[ 'name', 'analyticsAttributes.topicSubChannel' ],
+			[ 'name', 'page-topic' ],
+		];
 
-		$keywords_article_section = $this->getMetaContent( $this->article()->getDoc(), 'property', 'article:section' );
-		$keywords_article_section = $this->keyword_clean( $keywords_article_section );
-
-		$keywords_article_top_section = $this->getMetaContent( $this->article()->getDoc(), 'property', 'article:top-level-section' );
-		$keywords_article_top_section = $this->keyword_clean( $keywords_article_top_section );
-
-		$keywords_dfp = $this->getMetaContent( $this->article()->getDoc(), 'name', 'dfp-ad-unit-path' );
-		$keywords_dfp = $this->keyword_clean( $keywords_dfp );
-
-		$keywords_topics = $this->getMetaContent( $this->article()->getDoc(), 'name', 'topics' );
-		$keywords_topics = $this->keyword_clean( $keywords_topics );
+		$keywords_meta = [];
+		foreach ( $meta as $search ) {
+			$_meta = $this->getMetaContent( $this->article()->getDoc(), $search[0], $search[1] );
+			$keywords_meta = array_merge( $keywords_meta, $_meta );
+		}
 
 		$keywords_js = [];
-		foreach ( [ 'section', 'siteHier', 'siteSection', 'articleSection', 'sections', 'hub_page' ] as $search_key ) {
+		foreach ( [ 'topic', 'topicName', 'section', 'siteHier', 'siteSection', 'articleSection', 'sections', 'hub_page' ] as $search_key ) {
 			$keywords_js = array_merge( $keywords_js, $this->parse_js( $this->article()->getRawHtml(), $search_key ) );
 		}
 
-		$keywords = implode( ',', array_unique( array_merge( $keywords, $keywords_article_section, $keywords_article_top_section, $keywords_dfp, $keywords_topics, $keywords_js ) ) );
+		$keywords = implode( ',', array_unique( array_merge( $keywords_meta, $keywords_js ) ) );
 		return $keywords;
 	}
 
