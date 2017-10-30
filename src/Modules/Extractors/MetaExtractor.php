@@ -262,10 +262,10 @@ class MetaExtractor extends AbstractModule implements ModuleInterface {
 		$keywords_meta = [];
 		foreach ( $meta as $search ) {
 			$_meta = $this->getMetaContent( $this->article()->getDoc(), $search[0], $search[1] );
-			$keywords_meta = array_merge( $keywords_meta, $_meta );
+			$keywords_meta = array_merge( $keywords_meta, explode( ',', $_meta ) );
 		}
 
-		$keywords = implode( ',', array_unique( $keywords_meta ) );
+		$keywords = implode( ',', array_unique( array_map( 'trim', $keywords_meta ) ) );
 		return $keywords;
 	}
 
@@ -285,12 +285,14 @@ class MetaExtractor extends AbstractModule implements ModuleInterface {
 			[ 'name', 'analyticsAttributes.contentType' ],
 			[ 'name', 'analyticsAttributes.topicSubChannel' ],
 			[ 'name', 'page-topic' ],
+			[ 'name', 'main_tag_label' ],
+			[ 'name', 'channel' ],
 		];
 
 		$keywords_meta = [];
 		foreach ( $meta as $search ) {
 			$_meta = $this->getMetaContent( $this->article()->getDoc(), $search[0], $search[1] );
-			$keywords_meta = array_merge( $keywords_meta, $_meta );
+			$keywords_meta = array_merge( $keywords_meta, explode( ',' ,$_meta ) );
 		}
 
 		$keywords_js = [];
@@ -298,7 +300,7 @@ class MetaExtractor extends AbstractModule implements ModuleInterface {
 			$keywords_js = array_merge( $keywords_js, $this->parse_js( $this->article()->getRawHtml(), $search_key ) );
 		}
 
-		$keywords = implode( ',', array_unique( array_merge( $keywords_meta, $keywords_js ) ) );
+		$keywords = implode( ',', array_unique( array_map( 'trim', array_merge( $keywords_meta, $keywords_js ) ) ) );
 		return $keywords;
 	}
 
