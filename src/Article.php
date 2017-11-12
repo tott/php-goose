@@ -457,4 +457,21 @@ class Article {
 	public function getPopularWords() {
 		return $this->popularWords;
 	}
+
+	/**
+	 * Most popular words used in the lovely article
+	 *
+	 * @var string[]
+	 */
+	protected $otherversions = [];
+
+	/** @param string[] $popularWords */
+	public function setOtherVersions( $otherversions ) {
+		$this->otherversions = $otherversions;
+	}
+
+	/** @return string[] */
+	public function getOtherVersions() {
+		return $this->otherversions;
+	}
 }

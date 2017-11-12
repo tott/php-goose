@@ -39,7 +39,7 @@ class MetaExtractor extends AbstractModule implements ModuleInterface {
 		$article->setMetaSections( $this->getMetaSections() );
 		$article->setCanonicalLink( $this->getCanonicalLink() );
 		$article->setLanguage( $this->getMetaLanguage() ?: $this->config()->get( 'language' ) );
-
+		$article->setOtherVersions( $this->getOtherVersions() );
 		$this->config()->set( 'language', $article->getLanguage() );
 	}
 
@@ -304,6 +304,21 @@ class MetaExtractor extends AbstractModule implements ModuleInterface {
 		return $keywords;
 	}
 
+
+	/**
+	 * If the article has other versions let's store em
+	 *
+	 * @return string
+	 */
+	private function getOtherVersions() {
+		$nodes = $this->getNodesByLowercasePropertyValue( $this->article()->getDoc(), 'link', 'rel', 'amphtml' );
+
+		if ( $nodes->count() ) {
+			$other_versions['amphtml'] = trim( $nodes->first()->attr( 'href' ) );
+		}
+
+		return $other_versions;
+	}
 
 	/**
 	 * If the article has meta canonical link set in the url
