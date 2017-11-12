@@ -311,6 +311,7 @@ class MetaExtractor extends AbstractModule implements ModuleInterface {
 	 * @return string
 	 */
 	private function getOtherVersions() {
+		$other_versions = [];
 		$nodes = $this->getNodesByLowercasePropertyValue( $this->article()->getDoc(), 'link', 'rel', 'amphtml' );
 
 		if ( $nodes->count() ) {
